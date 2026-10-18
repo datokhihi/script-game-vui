@@ -23,12 +23,10 @@ nametagFolder.Parent = screenGui
 local shadow = Instance.new("Frame")
 shadow.Size = UDim2.new(0, 214, 0, 354)
 shadow.Position = UDim2.new(0, 13, 0.5, -177)
-shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-shadow.BackgroundTransparency = 0.55
+shadow.BackgroundTransparency = 1
 shadow.BorderSizePixel = 0
 shadow.ZIndex = 0
 shadow.Parent = screenGui
-Instance.new("UICorner", shadow).CornerRadius = UDim.new(0, 12)
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 210, 0, 350)
@@ -83,25 +81,26 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = 3
 title.Parent = header
 
-local function makeWinBtn(posX, bg, fg, txt)
+local function makeWinBtn(posX, txt)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, 20, 0, 20)
     b.Position = UDim2.new(1, posX, 0.5, -10)
-    b.BackgroundColor3 = bg
+    b.BackgroundTransparency = 1
     b.BorderSizePixel = 0
     b.Text = txt
-    b.TextColor3 = fg
+    b.TextColor3 = Color3.fromRGB(160, 165, 200)
     b.TextSize = txt == "×" and 16 or 13
     b.Font = Enum.Font.GothamBold
     b.ZIndex = 4
     b.Parent = header
-    Instance.new("UICorner", b).CornerRadius = UDim.new(1, 0)
+    b.MouseEnter:Connect(function() b.TextColor3 = Color3.fromRGB(255, 255, 255) end)
+    b.MouseLeave:Connect(function() b.TextColor3 = Color3.fromRGB(160, 165, 200) end)
     return b
 end
 
-local btnMin   = makeWinBtn(-88, Color3.fromRGB(255,189,46),  Color3.fromRGB(100,70,0),   "–")
-local btnMax   = makeWinBtn(-62, Color3.fromRGB(40,200,120),  Color3.fromRGB(0,70,30),    "□")
-local btnClose = makeWinBtn(-36, Color3.fromRGB(255,70,70),   Color3.fromRGB(120,0,0),    "×")
+local btnMin   = makeWinBtn(-88, "–")
+local btnMax   = makeWinBtn(-62, "□")
+local btnClose = makeWinBtn(-36, "×")
 
 local body = Instance.new("Frame")
 body.Size = UDim2.new(1, 0, 1, -36)
@@ -410,22 +409,6 @@ local function stopFollowing()
     statusDot.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
 end
 
-local function getOffset()
-    if lockPosition == "behind" then
-        return CFrame.new(0, 0, FOLLOW_DISTANCE)
-    end
-    if lockPosition == "front" then
-        return CFrame.new(0, 0, -FOLLOW_DISTANCE)
-    end
-    if lockPosition == "under" then
-        return CFrame.new(0, -FOLLOW_DISTANCE - 2, 0) * CFrame.Angles(math.rad(90), 0, 0)
-    end
-    if lockPosition == "above" then
-        return CFrame.new(0, FOLLOW_DISTANCE + 2, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-    end
-    return CFrame.new(0, 0, FOLLOW_DISTANCE)
-end
-
 local function startFollowing(targetPlayer)
     stopFollowing()
     following = targetPlayer
@@ -440,7 +423,25 @@ local function startFollowing(targetPlayer)
         local myRoot = myChar:FindFirstChild("HumanoidRootPart")
         local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
         if not myRoot or not targetRoot then return end
-        myRoot.CFrame = targetRoot.CFrame * getOffset()
+
+        local targetCF = targetRoot.CFrame
+
+        if lockPosition == "behind" then
+            myRoot.CFrame = targetCF * CFrame.new(0, 0, FOLLOW_DISTANCE)
+
+        elseif lockPosition == "front" then
+            myRoot.CFrame = targetCF * CFrame.new(0, 0, -FOLLOW_DISTANCE)
+
+        elseif lockPosition == "under" then
+            local pos = targetCF.Position + Vector3.new(0, -(FOLLOW_DISTANCE + 2), 0)
+            local lookDir = targetCF.LookVector
+            myRoot.CFrame = CFrame.new(pos, pos + lookDir) * CFrame.Angles(math.rad(90), 0, 0)
+
+        elseif lockPosition == "above" then
+            local pos = targetCF.Position + Vector3.new(0, FOLLOW_DISTANCE + 2, 0)
+            local lookDir = targetCF.LookVector
+            myRoot.CFrame = CFrame.new(pos, pos + lookDir) * CFrame.Angles(math.rad(-90), 0, 0)
+        end
     end)
 end
 
